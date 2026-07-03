@@ -1,9 +1,9 @@
-import { Info, Pencil, Plus, Ruler, Trash2 } from 'lucide-react'
+import { Info, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 import { useCreateStandard, useDeleteStandard, useStandards, useUpdateStandard } from '../api/hooks'
 import type { StandardRule } from '../api/types'
-import { Badge, Button, EmptyState, Input, Modal, PageSpinner, Switch, Textarea } from '../components/ui'
+import { Badge, Button, EmptyState, Input, Modal, PageHeader, PageSpinner, Switch, Textarea } from '../components/ui'
 import { cn } from '../lib/utils'
 
 interface RuleForm {
@@ -43,22 +43,21 @@ export default function Standards() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">Company Standards</h1>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            Formatting rules injected into every extraction prompt. {activeCount} of {rules?.length ?? 0} active.
-          </p>
-        </div>
-        <Button variant="primary" size="sm" onClick={() => { setForm(EMPTY); setModalOpen(true) }}>
-          <Plus size={13} /> Add rule
-        </Button>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-5 p-4 sm:p-6">
+      <PageHeader
+        eyebrow="Calibration"
+        title="Company Standards"
+        subtitle={`Formatting rules injected into every extraction prompt. ${activeCount} of ${rules?.length ?? 0} active.`}
+        actions={
+          <Button variant="primary" size="sm" onClick={() => { setForm(EMPTY); setModalOpen(true) }}>
+            <Plus size={13} /> Add rule
+          </Button>
+        }
+      />
 
       {!rules?.length ? (
         <div className="card">
-          <EmptyState icon={<Ruler size={20} />} title="No standards configured">
+          <EmptyState art title="No standards configured">
             Add company-specific formatting rules — naming conventions, unit formats, equivalences — and the AI will
             apply them to every extraction.
           </EmptyState>
@@ -69,19 +68,23 @@ export default function Standards() {
             <div
               key={r.id}
               className={cn(
-                'card group flex items-start gap-3.5 p-4 transition-opacity',
-                !r.active && 'opacity-55',
+                'card group flex items-start gap-4 p-4 transition-all hover:border-line-strong',
+                !r.active && 'opacity-45',
               )}
             >
-              <span className="mt-0.5 w-6 shrink-0 text-right font-mono text-[11px] text-ink-muted">{i + 1}</span>
+              <span className="mt-0.5 w-7 shrink-0 text-right font-mono text-[15px] font-medium tabular-nums text-accent/50">
+                {String(i + 1).padStart(2, '0')}
+              </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-[13px] font-semibold">{r.title}</h3>
+                  <h3 className="font-display text-[13px] font-semibold tracking-tight text-ink">{r.title}</h3>
                   {!r.active && <Badge tone="neutral">disabled</Badge>}
                 </div>
-                <p className="mt-1 text-[12.5px] leading-relaxed text-ink-secondary">{r.rule}</p>
+                <p className="mt-1.5 border-l-2 border-accent/25 pl-3 text-[12.5px] leading-relaxed text-ink-secondary">
+                  {r.rule}
+                </p>
                 {r.context && (
-                  <p className="mt-1.5 flex items-start gap-1.5 text-[11.5px] leading-relaxed text-ink-muted">
+                  <p className="mt-2 flex items-start gap-1.5 text-[11.5px] leading-relaxed text-ink-muted">
                     <Info size={11.5} className="mt-0.5 shrink-0" />
                     {r.context}
                   </p>
@@ -99,7 +102,7 @@ export default function Standards() {
                   onClick={() => {
                     if (confirm(`Delete rule "${r.title}"?`)) deleteStandard.mutate(r.id)
                   }}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted opacity-0 transition-all hover:bg-crit/20 hover:text-red-300 group-hover:opacity-100"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted opacity-0 transition-all hover:bg-crit/15 hover:text-crit group-hover:opacity-100"
                   title="Delete rule"
                 >
                   <Trash2 size={13} />

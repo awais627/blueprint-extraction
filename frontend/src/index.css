@@ -1,4 +1,4 @@
-@import '@fontsource-variable/inter';
+@import '@fontsource-variable/space-grotesk';
 @import '@fontsource-variable/jetbrains-mono';
 
 @tailwind base;
@@ -10,20 +10,30 @@
     @apply antialiased;
   }
   body {
-    @apply bg-page text-ink font-sans text-[13.5px] leading-normal;
+    @apply bg-page font-sans text-[13.5px] leading-normal text-ink;
+    background-image:
+      radial-gradient(ellipse 1200px 700px at 18% -8%, rgba(53, 200, 238, 0.055), transparent 60%),
+      radial-gradient(ellipse 900px 600px at 100% 110%, rgba(53, 200, 238, 0.03), transparent 60%),
+      linear-gradient(rgba(93, 140, 210, 0.033) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(93, 140, 210, 0.033) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+    background-attachment: fixed;
+  }
+  ::selection {
+    background: rgba(53, 200, 238, 0.28);
   }
   ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
+    width: 9px;
+    height: 9px;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.22);
+    background: rgba(125, 160, 215, 0.18);
     border-radius: 8px;
     border: 2px solid transparent;
     background-clip: content-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.38);
+    background: rgba(53, 200, 238, 0.4);
     border: 2px solid transparent;
     background-clip: content-box;
   }
@@ -34,33 +44,102 @@
 
 @layer components {
   .card {
-    @apply rounded-xl border border-line bg-surface-1 shadow-card;
+    @apply rounded-xl border border-line bg-surface-1/90 shadow-card backdrop-blur-[2px];
   }
   .input {
     @apply w-full rounded-lg border border-line-strong bg-surface-2 px-3 py-2 text-ink placeholder:text-ink-muted
-      focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25 transition-colors;
+      transition-colors focus:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent/20;
   }
   .label {
-    @apply mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-muted;
+    @apply mb-1.5 block font-mono text-[10px] font-medium uppercase tracking-label text-ink-muted;
+  }
+  /* uppercase micro caption — the "title block lettering" of the system */
+  .microlabel {
+    @apply font-mono text-[10px] font-medium uppercase tracking-label text-ink-muted;
+  }
+  /* dimension-line section rule:  ├────────┤ */
+  .dim-rule {
+    @apply relative flex items-center gap-3;
+  }
+  .dim-rule::before,
+  .dim-rule::after {
+    content: '';
+    @apply h-px flex-1 bg-line;
+  }
+  .dim-rule::before {
+    background: linear-gradient(90deg, transparent, rgba(125, 160, 215, 0.22));
+  }
+  .dim-rule::after {
+    background: linear-gradient(90deg, rgba(125, 160, 215, 0.22), transparent);
   }
 }
 
-/* blueprint grid backdrop for the viewer */
+/* fine blueprint grid for hero surfaces (dropzone, viewer) */
 .blueprint-grid {
   background-image:
-    linear-gradient(rgba(57, 135, 229, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(57, 135, 229, 0.055) 1px, transparent 1px),
-    linear-gradient(rgba(57, 135, 229, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(57, 135, 229, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(53, 200, 238, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(53, 200, 238, 0.06) 1px, transparent 1px),
+    linear-gradient(rgba(53, 200, 238, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(53, 200, 238, 0.028) 1px, transparent 1px);
   background-size: 96px 96px, 96px 96px, 24px 24px, 24px 24px;
+}
+
+/* registration corner marks (drawing-sheet corners) */
+.reg-corners {
+  position: relative;
+}
+.reg-corners::before,
+.reg-corners::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: rgba(53, 200, 238, 0.4);
+  border-style: solid;
+  pointer-events: none;
+  transition: border-color 0.25s ease;
+}
+.reg-corners::before {
+  top: 10px;
+  left: 10px;
+  border-width: 1.5px 0 0 1.5px;
+}
+.reg-corners::after {
+  bottom: 10px;
+  right: 10px;
+  border-width: 0 1.5px 1.5px 0;
+}
+.reg-corners-hover:hover::before,
+.reg-corners-hover:hover::after,
+.reg-corners-active::before,
+.reg-corners-active::after {
+  border-color: rgba(53, 200, 238, 0.85);
 }
 
 /* highlight pulse for the active bounding box */
 @keyframes bbox-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(57, 135, 229, 0.55); }
-  70% { box-shadow: 0 0 0 10px rgba(57, 135, 229, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(57, 135, 229, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(53, 200, 238, 0.55); }
+  70% { box-shadow: 0 0 0 10px rgba(53, 200, 238, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(53, 200, 238, 0); }
 }
 .bbox-pulse {
   animation: bbox-pulse 1.2s ease-out 2;
+}
+
+/* status LED with halo */
+.led {
+  position: relative;
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+}
+.led::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: inherit;
+  opacity: 0.25;
+  filter: blur(2px);
 }

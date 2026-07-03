@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fontsource-variable/inter": "^5.1.1",
     "@fontsource-variable/jetbrains-mono": "^5.1.2",
+    "@fontsource-variable/space-grotesk": "^5.2.10",
     "@tanstack/react-query": "^5.62.11",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",

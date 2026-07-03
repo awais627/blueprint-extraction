@@ -6,10 +6,9 @@ import {
   useDeletePartType,
   usePartTypes,
   useSaveFields,
-  useUpdatePartType,
 } from '../api/hooks'
 import type { FieldDefinitionInput, PartType } from '../api/types'
-import { Badge, Button, Input, Modal, PageSpinner, Switch, Textarea } from '../components/ui'
+import { Badge, Button, Input, Modal, PageHeader, PageSpinner, Switch, Textarea } from '../components/ui'
 import { cn } from '../lib/utils'
 
 function FieldEditor({ partType }: { partType: PartType }) {
@@ -60,25 +59,31 @@ function FieldEditor({ partType }: { partType: PartType }) {
     <div>
       <div className="space-y-2">
         {rows.map((row, i) => (
-          <div key={row.id ?? `new-${i}`} className={cn('rounded-lg border border-line bg-surface-2/60 p-3', !row.active && 'opacity-55')}>
+          <div
+            key={row.id ?? `new-${i}`}
+            className={cn(
+              'rounded-lg border border-line bg-surface-2/50 p-3 transition-all hover:border-line-strong',
+              !row.active && 'opacity-50',
+            )}
+          >
             <div className="flex items-start gap-2.5">
               <div className="mt-1.5 flex flex-col items-center gap-0.5 text-ink-muted">
-                <button onClick={() => move(i, -1)} disabled={i === 0} className="hover:text-ink disabled:opacity-30">
+                <button onClick={() => move(i, -1)} disabled={i === 0} className="transition-colors hover:text-accent disabled:opacity-30">
                   <ChevronUp size={13} />
                 </button>
-                <GripVertical size={12} className="opacity-50" />
-                <button onClick={() => move(i, 1)} disabled={i === rows.length - 1} className="hover:text-ink disabled:opacity-30">
+                <GripVertical size={12} className="opacity-40" />
+                <button onClick={() => move(i, 1)} disabled={i === rows.length - 1} className="transition-colors hover:text-accent disabled:opacity-30">
                   <ChevronDown size={13} />
                 </button>
               </div>
-              <div className="grid flex-1 grid-cols-[1fr_1.2fr_1.2fr] gap-2.5">
+              <div className="grid flex-1 grid-cols-1 gap-2.5 sm:grid-cols-[1fr_1.2fr_1.2fr]">
                 <div>
                   <label className="label">Key</label>
                   <Input
                     value={row.key}
                     onChange={(e) => update(i, { key: e.target.value })}
                     placeholder="threadSpec"
-                    className={cn('font-mono text-xs', row.key && !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(row.key) && 'border-crit')}
+                    className={cn('font-mono text-xs', row.key && !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(row.key) && 'border-crit/60')}
                   />
                 </div>
                 <div>
@@ -87,21 +92,21 @@ function FieldEditor({ partType }: { partType: PartType }) {
                 </div>
                 <div>
                   <label className="label">Example values</label>
-                  <Input value={row.example} onChange={(e) => update(i, { example: e.target.value })} placeholder="M12-1.25" />
+                  <Input value={row.example} onChange={(e) => update(i, { example: e.target.value })} placeholder="M12-1.25" className="font-mono text-xs" />
                 </div>
               </div>
               <div className="mt-6 flex items-center gap-2">
                 <Switch checked={row.active} onChange={(v) => update(i, { active: v })} label="Field active" />
                 <button
                   onClick={() => remove(i)}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted hover:bg-crit/20 hover:text-red-300"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-crit/15 hover:text-crit"
                   title="Remove field"
                 >
                   <Trash2 size={13.5} />
                 </button>
               </div>
             </div>
-            <div className="ml-[26px] mt-2">
+            <div className="ml-0 mt-2 sm:ml-[26px]">
               <label className="label">Extraction hint for the AI</label>
               <Textarea
                 value={row.description}
@@ -118,8 +123,12 @@ function FieldEditor({ partType }: { partType: PartType }) {
         <Button size="sm" variant="ghost" onClick={add}>
           <Plus size={13} /> Add field
         </Button>
-        <div className="flex items-center gap-2">
-          {dirty && <span className="text-[11px] text-amber-300">unsaved changes</span>}
+        <div className="flex items-center gap-2.5">
+          {dirty && (
+            <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-warn">
+              <span className="led bg-warn animate-blink" /> unsaved
+            </span>
+          )}
           <Button
             size="sm"
             variant="primary"
@@ -143,7 +152,6 @@ function FieldEditor({ partType }: { partType: PartType }) {
 export default function PartTypes() {
   const { data: partTypes, isLoading } = usePartTypes()
   const createPartType = useCreatePartType()
-  const updatePartType = useUpdatePartType()
   const deletePartType = useDeletePartType()
 
   const [selectedId, setSelectedId] = useState<number | null>(null)
@@ -155,42 +163,44 @@ export default function PartTypes() {
   if (isLoading) return <PageSpinner />
 
   return (
-    <div className="mx-auto max-w-6xl p-6">
-      <div className="mb-4 flex items-end justify-between">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">Part Types</h1>
-          <p className="mt-0.5 text-xs text-ink-muted">
-            Each part type defines the fields the AI extracts. The extraction prompt is assembled from this configuration at runtime.
-          </p>
-        </div>
-        <Button variant="primary" size="sm" onClick={() => { setForm({ name: '', description: '' }); setModalOpen(true) }}>
-          <Plus size={13} /> New part type
-        </Button>
-      </div>
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
+      <PageHeader
+        eyebrow="Calibration"
+        title="Part Types"
+        subtitle="Each part type defines the fields the AI extracts. The extraction prompt is assembled from this configuration at runtime."
+        actions={
+          <Button variant="primary" size="sm" onClick={() => { setForm({ name: '', description: '' }); setModalOpen(true) }}>
+            <Plus size={13} /> New part type
+          </Button>
+        }
+      />
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row">
         {/* list */}
-        <div className="w-56 shrink-0 space-y-1.5">
-          {partTypes?.map((pt) => (
-            <button
-              key={pt.id}
-              onClick={() => setSelectedId(pt.id)}
-              className={cn(
-                'w-full rounded-lg border px-3 py-2.5 text-left transition-colors',
-                selected?.id === pt.id
-                  ? 'border-accent/40 bg-accent/10'
-                  : 'border-line bg-surface-1 hover:bg-surface-2',
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <Shapes size={13} className={selected?.id === pt.id ? 'text-sky-300' : 'text-ink-muted'} />
-                <span className="text-[13px] font-medium">{pt.name}</span>
-              </div>
-              <p className="mt-1 text-[11px] text-ink-muted">
-                {pt.fields.filter((f) => f.active).length} active fields
-              </p>
-            </button>
-          ))}
+        <div className="flex shrink-0 gap-2 overflow-x-auto pb-1 lg:w-56 lg:flex-col lg:gap-1.5 lg:overflow-visible lg:pb-0">
+          {partTypes?.map((pt) => {
+            const isSel = selected?.id === pt.id
+            return (
+              <button
+                key={pt.id}
+                onClick={() => setSelectedId(pt.id)}
+                className={cn(
+                  'group min-w-[160px] rounded-lg border px-3 py-2.5 text-left transition-all lg:min-w-0',
+                  isSel
+                    ? 'border-accent/35 bg-accent/[0.07] shadow-[inset_0_0_0_1px_rgba(53,200,238,0.12)]'
+                    : 'border-line bg-surface-1 hover:border-line-strong hover:bg-surface-2',
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <Shapes size={13} className={cn('transition-colors', isSel ? 'text-accent-bright' : 'text-ink-muted group-hover:text-ink-secondary')} />
+                  <span className={cn('text-[13px] font-medium', isSel ? 'text-white' : 'text-ink')}>{pt.name}</span>
+                </div>
+                <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.06em] text-ink-muted">
+                  {pt.fields.filter((f) => f.active).length} active fields
+                </p>
+              </button>
+            )
+          })}
         </div>
 
         {/* editor */}
@@ -199,10 +209,10 @@ export default function PartTypes() {
             <div className="mb-4 flex items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-[15px] font-semibold">{selected.name}</h2>
+                  <h2 className="font-display text-[15px] font-semibold tracking-tight text-white">{selected.name}</h2>
                   <Badge tone="neutral">{selected.fields.length} fields</Badge>
                 </div>
-                {selected.description && <p className="mt-1 max-w-xl text-xs text-ink-muted">{selected.description}</p>}
+                {selected.description && <p className="mt-1 max-w-xl text-xs leading-relaxed text-ink-muted">{selected.description}</p>}
               </div>
               <Button
                 size="sm"
