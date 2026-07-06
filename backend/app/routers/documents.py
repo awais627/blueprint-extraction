@@ -3,11 +3,11 @@ import shutil
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..config import settings
 from ..database import get_db
-from ..models import Correction, Document, ExtractedField, PartType
+from ..models import Document, ExtractedField, Extraction, PartType
 from ..schemas import DocumentDetail, DocumentOut, ExtractedFieldOut
 from ..services import pipeline
 
@@ -50,7 +50,14 @@ def _latest_fields(doc: Document) -> list[ExtractedField]:
 
 @router.get("", response_model=list[DocumentOut])
 def list_documents(db: Session = Depends(get_db)):
-    docs = db.scalars(select(Document).order_by(Document.created_at.desc())).all()
+    docs = db.scalars(
+        select(Document)
+        .options(
+            joinedload(Document.part_type),
+            selectinload(Document.extractions).selectinload(Extraction.fields),
+        )
+        .order_by(Document.created_at.desc())
+    ).all()
     return [_doc_out(d, _latest_fields(d)) for d in docs]
 
 
@@ -93,29 +100,27 @@ def upload_documents(
 
 @router.get("/{document_id}", response_model=DocumentDetail)
 def get_document(document_id: str, db: Session = Depends(get_db)):
-    doc = db.get(Document, document_id)
+    doc = db.get(
+        Document,
+        document_id,
+        options=[
+            joinedload(Document.part_type),
+            joinedload(Document.extractions).joinedload(Extraction.fields).joinedload(ExtractedField.corrections),
+            joinedload(Document.extractions).joinedload(Extraction.prompt_version),
+        ],
+    )
     if doc is None:
         raise HTTPException(404, "Document not found")
 
     fields = _latest_fields(doc)
     extraction = doc.extractions[-1] if doc.extractions else None
 
-    corrections_by_field: dict[int, Correction] = {}
-    if fields:
-        rows = db.scalars(
-            select(Correction)
-            .where(Correction.field_id.in_([f.id for f in fields]))
-            .order_by(Correction.created_at)
-        ).all()
-        for c in rows:
-            corrections_by_field[c.field_id] = c  # keep latest
-
     base = _doc_out(doc, fields)
     field_out = []
     for f in fields:
         item = ExtractedFieldOut.model_validate(f)
-        if f.id in corrections_by_field:
-            item.correction = corrections_by_field[f.id]
+        if f.corrections:
+            item.correction = f.corrections[-1]  # keep latest
         field_out.append(item)
 
     return DocumentDetail(

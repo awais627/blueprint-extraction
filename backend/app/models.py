@@ -145,6 +145,7 @@ class ExtractedField(Base):
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
 
     extraction: Mapped[Extraction] = relationship(back_populates="fields")
+    corrections: Mapped[list["Correction"]] = relationship(order_by="Correction.created_at")
 
 
 class Correction(Base):

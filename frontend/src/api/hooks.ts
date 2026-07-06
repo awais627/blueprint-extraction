@@ -90,7 +90,23 @@ export const useSetFieldStatus = (documentId: string) => {
   return useMutation({
     mutationFn: ({ fieldId, status }: { fieldId: number; status: 'verified' | 'unverified' }) =>
       api.patch<ExtractedField>(`/api/fields/${fieldId}`, { status }),
-    onSuccess: () => {
+    onMutate: async ({ fieldId, status }) => {
+      await qc.cancelQueries({ queryKey: ['documents', documentId] })
+      const previous = qc.getQueryData<DocumentDetail>(['documents', documentId])
+      if (previous) {
+        qc.setQueryData<DocumentDetail>(['documents', documentId], {
+          ...previous,
+          fields: previous.fields.map((f) => (f.id === fieldId ? { ...f, status } : f)),
+        })
+      }
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        qc.setQueryData(['documents', documentId], context.previous)
+      }
+    },
+    onSettled: () => {
       qc.invalidateQueries({ queryKey: ['documents', documentId] })
       qc.invalidateQueries({ queryKey: ['documents'] })
       qc.invalidateQueries({ queryKey: ['dashboard'] })
