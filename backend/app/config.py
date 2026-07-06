@@ -14,9 +14,6 @@ class Settings(BaseSettings):
     extraction_mode: str = "balanced"
 
     data_dir: Path = Path("data-store")
-    # compose overrides this to point at the db service; the default targets
-    # the system Postgres (port 5433 on this machine) so local (non-docker)
-    # backend runs work with docker fully stopped
     database_url: str = "postgresql+psycopg://blueprint:blueprint@localhost:5433/blueprint_local"
     poll_interval: float = 2.0
     poll_timeout: float = 900.0
