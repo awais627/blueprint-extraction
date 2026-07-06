@@ -250,6 +250,10 @@ def find_best_window(value: str, words: list[Word]) -> tuple[list[Word], float]:
     if not value_norm or not words:
         return [], 0.0
 
+    # fuzzy ratios are meaningless for very short strings — "sc" scores 0.67
+    # against a lone "S" and 0.57 against "SCALE" — so demand an exact match
+    exact_only = len(value_norm) <= 3
+
     n_value_tokens = max(1, len(value.split()))
     best: list[Word] = []
     best_score = 0.0
@@ -259,7 +263,10 @@ def find_best_window(value: str, words: list[Word]) -> tuple[list[Word], float]:
         for start in range(0, len(words) - size + 1):
             window = words[start:start + size]
             window_norm = "".join(_normalize(w.text) for w in window)
-            score = _ratio(value_norm, window_norm)
+            if exact_only:
+                score = 1.0 if window_norm == value_norm else 0.0
+            else:
+                score = _ratio(value_norm, window_norm)
             if score > best_score + 1e-9 or (abs(score - best_score) < 1e-9 and best and len(window) < len(best)):
                 best, best_score = window, score
     return best, best_score
