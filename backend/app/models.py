@@ -168,5 +168,14 @@ class Correction(Base):
     bbox_y: Mapped[float | None] = mapped_column(Float, nullable=True)
     bbox_w: Mapped[float | None] = mapped_column(Float, nullable=True)
     bbox_h: Mapped[float | None] = mapped_column(Float, nullable=True)
+    # snapshot of the field's match info immediately before this correction overwrote it,
+    # so reverting the correction can restore the field's original match tier/location
+    prev_match_quality: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    prev_page: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    prev_bbox_x: Mapped[float | None] = mapped_column(Float, nullable=True)
+    prev_bbox_y: Mapped[float | None] = mapped_column(Float, nullable=True)
+    prev_bbox_w: Mapped[float | None] = mapped_column(Float, nullable=True)
+    prev_bbox_h: Mapped[float | None] = mapped_column(Float, nullable=True)
+    prev_locations: Mapped[list | None] = mapped_column(JSON, nullable=True)
     prompt_version_id: Mapped[int | None] = mapped_column(ForeignKey("prompt_versions.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

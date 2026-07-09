@@ -12,7 +12,7 @@ from collections import Counter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from ..models import Correction, FieldDefinition, PartType, StandardRule
+from ..models import Correction, Document, FieldDefinition, PartType, StandardRule
 
 MAX_WARNINGS_PER_FIELD = 3
 
@@ -27,7 +27,13 @@ def get_active_standards(db: Session) -> list[StandardRule]:
 
 def get_correction_warnings(db: Session) -> dict[str, list[str]]:
     """Group correction reasons by field key -> warning lines, most frequent first."""
-    corrections = list(db.scalars(select(Correction).order_by(Correction.created_at.desc())))
+    corrections = list(
+        db.scalars(
+            select(Correction)
+            .where(Correction.document_id.in_(select(Document.id)))
+            .order_by(Correction.created_at.desc())
+        )
+    )
     by_field: dict[str, list[tuple[str, str | None]]] = {}
     for c in corrections:
         reason = c.reason.strip()

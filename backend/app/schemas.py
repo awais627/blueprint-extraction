@@ -87,6 +87,15 @@ class CorrectionIn(BaseModel):
     bbox: BBox | None = None
 
 
+class SnippetPreviewIn(BaseModel):
+    field_id: int
+    bbox: BBox
+
+
+class SnippetPreviewOut(BaseModel):
+    source_snippet: str | None = None
+
+
 class CorrectionOut(ORMModel):
     id: int
     field_id: int | None

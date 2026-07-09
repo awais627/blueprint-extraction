@@ -21,6 +21,7 @@ import {
   useCreateCorrection,
   useDocument,
   useProcessDocument,
+  useRegionSnippet,
   useSetFieldStatus,
 } from '../api/hooks'
 import { ApiError, BASE } from '../api/client'
@@ -104,6 +105,20 @@ interface CorrectionDraft {
   category: string
   region: BBox | null
   picking: boolean
+  /** OCR text under the marked box, once fetched — null while unmarked or loading */
+  snippet: string | null
+}
+
+/** The reason auto-added to the extraction prompt when the engineer leaves the "why"
+    field blank. Mirrors backend prompt_builder.get_correction_warnings — keep in sync. */
+function defaultReasonPreview(field: ExtractedField, correctedValue: string, snippet: string | null): string {
+  const original = (field.value ?? '').trim() || '(blank)'
+  const corrected = correctedValue.trim()
+  let sentence = `AI answered '${original}' here; the engineer corrected it to '${corrected}'`
+  if (snippet) {
+    sentence += ` [engineer marked where the correct value is printed; the text there reads: '${snippet}']`
+  }
+  return sentence
 }
 
 const statusEdge: Record<string, string> = {
@@ -381,8 +396,18 @@ function FieldRow({
             <Textarea
               value={draft.reason}
               onChange={(e) => onDraftChange({ reason: e.target.value })}
-              placeholder='e.g. "AI reads E18 instead of E8 because the 1 looks like scan noise" — this feeds back into the extraction prompt.'
+              placeholder={
+                draft.region
+                  ? defaultReasonPreview(field, draft.value, draft.snippet)
+                  : 'e.g. "AI reads E18 instead of E8 because the 1 looks like scan noise" — this feeds back into the extraction prompt.'
+              }
             />
+            {draft.region && !draft.reason.trim() && (
+              <p className="mt-1 text-[11.5px] leading-relaxed text-ink-muted">
+                Leave blank to feed the greyed-out sentence into the extraction prompt, or type your own to
+                improve it.
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Button
@@ -470,7 +495,8 @@ export default function Review() {
   const [correctingId, setCorrectingId] = useState<number | null>(null)
   // which occurrence of the active field's value is being viewed
   const [occIndex, setOccIndex] = useState(0)
-  const [draft, setDraft] = useState<CorrectionDraft>({ value: '', reason: '', category: '', region: null, picking: false })
+  const [draft, setDraft] = useState<CorrectionDraft>({ value: '', reason: '', category: '', region: null, picking: false, snippet: null })
+  const regionSnippet = useRegionSnippet()
 
   const fields = useMemo(() => doc?.fields ?? [], [doc])
   const reviewed = fields.filter((f) => f.status !== 'unverified').length
@@ -520,7 +546,7 @@ export default function Review() {
     setActiveFieldId(f.id)
     setOccIndex(0)
     setCorrectingId(f.id)
-    setDraft({ value: f.value ?? '', reason: '', category: '', region: null, picking: false })
+    setDraft({ value: f.value ?? '', reason: '', category: '', region: null, picking: false, snippet: null })
     if (f.bbox_x != null) viewerRef.current?.zoomToField(f)
   }, [])
 
@@ -676,7 +702,15 @@ export default function Review() {
               selectMode={correctingId != null && draft.picking}
               selectedRegion={correctingId != null ? draft.region : null}
               ghostRegion={ghostRegion}
-              onRegionSelect={(bbox) => setDraft((d) => ({ ...d, region: bbox, picking: false }))}
+              onRegionSelect={(bbox) => {
+                setDraft((d) => ({ ...d, region: bbox, picking: false, snippet: null }))
+                if (correctingId != null) {
+                  regionSnippet.mutate(
+                    { fieldId: correctingId, bbox },
+                    { onSuccess: (res) => setDraft((d) => ({ ...d, snippet: res.source_snippet })) },
+                  )
+                }
+              }}
             />
           )}
         </div>

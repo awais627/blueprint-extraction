@@ -2,12 +2,12 @@ import shutil
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from ..config import settings
 from ..database import get_db
-from ..models import Document, ExtractedField, Extraction, PartType
+from ..models import Correction, Document, ExtractedField, Extraction, PartType
 from ..schemas import DocumentDetail, DocumentOut, ExtractedFieldOut
 from ..services import pipeline
 
@@ -178,6 +178,9 @@ def delete_document(document_id: str, db: Session = Depends(get_db)):
     if doc.status == "processing":
         raise HTTPException(409, "Cannot delete a document while it is processing")
     artifacts = settings.artifacts_dir / doc.id
+    # Correction.document_id isn't a real FK (it's kept even after fields/extractions are
+    # gone, for history), so it doesn't cascade-delete on its own — clean it up explicitly
+    db.execute(delete(Correction).where(Correction.document_id == document_id))
     db.delete(doc)
     db.commit()
     # remove the upload and any orientation-normalized sibling (<id>*.pdf)

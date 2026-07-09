@@ -24,7 +24,11 @@ router = APIRouter(prefix="/api", tags=["dashboard"])
 def dashboard(db: Session = Depends(get_db)):
     docs = db.scalars(select(Document)).all()
     fields = db.scalars(select(ExtractedField)).all()
-    corrections = db.scalars(select(Correction).order_by(Correction.created_at.desc())).all()
+    corrections = db.scalars(
+        select(Correction)
+        .where(Correction.document_id.in_(select(Document.id)))
+        .order_by(Correction.created_at.desc())
+    ).all()
 
     verified = sum(1 for f in fields if f.status == "verified")
     corrected = sum(1 for f in fields if f.status == "corrected")

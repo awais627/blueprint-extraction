@@ -51,6 +51,13 @@ def _run_migrations():
         "ALTER TABLE extracted_fields ADD COLUMN source_text TEXT",
         "ALTER TABLE corrections ADD COLUMN source_snippet TEXT",
         "ALTER TABLE documents ADD COLUMN file_data BYTEA",
+        "ALTER TABLE corrections ADD COLUMN prev_match_quality VARCHAR(10)",
+        "ALTER TABLE corrections ADD COLUMN prev_page INTEGER",
+        "ALTER TABLE corrections ADD COLUMN prev_bbox_x FLOAT",
+        "ALTER TABLE corrections ADD COLUMN prev_bbox_y FLOAT",
+        "ALTER TABLE corrections ADD COLUMN prev_bbox_w FLOAT",
+        "ALTER TABLE corrections ADD COLUMN prev_bbox_h FLOAT",
+        "ALTER TABLE corrections ADD COLUMN prev_locations JSON",
     ]
     for stmt in migrations:
         try:

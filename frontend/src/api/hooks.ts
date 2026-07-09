@@ -133,6 +133,17 @@ export const useCreateCorrection = (documentId: string) => {
   })
 }
 
+/** Printed text under an engineer's marked box, for previewing the reason that will
+    feed into the extraction prompt. Same OCR lookup the backend uses when saving. */
+export const useRegionSnippet = () =>
+  useMutation({
+    mutationFn: ({ fieldId, bbox }: { fieldId: number; bbox: BBox }) =>
+      api.post<{ source_snippet: string | null }>('/api/corrections/preview-snippet', {
+        field_id: fieldId,
+        bbox,
+      }),
+  })
+
 // ---- part types --------------------------------------------------------------
 
 export const usePartTypes = () =>
