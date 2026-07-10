@@ -199,15 +199,16 @@ function FieldRow({
   const match = matchGlyph[shownQuality] ?? matchGlyph.none
   const shownConfidence = activeLoc?.conf ?? field.confidence
 
+  // an unverified field with no extracted value is the highest-priority thing to
+  // look at (nothing was read from the drawing) — flag its Review tag red
+  const isEmpty = !field.value
   const statusBadge =
     field.status === 'verified' ? (
       <Badge tone="good"><Check size={13} /> Verified</Badge>
     ) : field.status === 'corrected' ? (
       <Badge tone="crit"><Pencil size={12} /> Corrected</Badge>
     ) : (
-      // <Badge tone="warn"><PriorityIcon confidence={field.confidence} /> Review</Badge>
-      <Badge tone="warn"> Review</Badge>
-
+      <Badge tone={isEmpty ? 'crit' : 'warn'}> Review</Badge>
     )
 
   const save = () => {
